@@ -3,12 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def extract_params(H):
+def extract_params(X, freqs):
     amp = []
     ph = []
-    for i in range(1, 33):
-        amp.append(abs(H[466 * i]))
-        ph.append(np.angle(H[466 * i]))
+    id_fund = np.argmax(abs(X))
+    for i in range(0, 33):
+        amp.append(abs(X[id_fund * i]))
+        ph.append(np.angle(X[id_fund * i]))
     return amp, ph
 
 
@@ -23,39 +24,51 @@ def find_order(freq, target):
     return N
 
 
-def synthesis_note(N, amps, ph, freq, env):
-    n = np.arange(N)
-    x = np.zeros(N)
-    for i in range(32):
-        x += amps[i] * np.sin(freq * (i + 1) * n + ph[i])
+def synthesis_note(N, amps, ph, freq, env, fe):
+    t = np.linspace(0, (N/fe), N)
+    x = []
+    for dt in t:
+        val = 0
+        for i in range(33):
+            val += amps[i] * np.sin(2*np.pi*freq*i*dt + ph[i])
+        x.append(val)
     return x * env
 
 
 if __name__ == "__main__":
-    x, fe = sf.read('note_guitare_lad.wav')
-    f = 14912
-    N = len(x)
-    w = np.hanning(N)
-    xw = x * w
-    X = np.fft.fft(xw, N)
-    amp, ph = extract_params(X)
+    signal, fe = sf.read('note_guitare_lad.wav')
+    f = 466
+    N = len(signal)
+    w = np.hamming(N)
+    signalW = signal * w
+    X = np.fft.fft(signalW, N)
+    freq_arr = np.fft.fftfreq(N)
+    amp, ph = extract_params(X, freq_arr)
+
 
     filter_freq = np.pi / 1000
     target_gain = np.sqrt(2) / 2
     Nf = find_order(filter_freq, target_gain)
-    Nf = 886
     nf = np.arange(-Nf / 2, Nf / 2)
     k = int((Nf * f / fe - 1) / 2)
     hf = (1 / Nf) * np.sin(np.pi * nf * k / Nf) / (np.sin(np.pi * nf / Nf) + 1e-20)
     hf[int(Nf / 2)] = k / Nf
     wf = np.hanning(Nf)
     hwf = hf * wf
-    env = np.convolve(hwf, abs(x))
-    sol = synthesis_note(N, amp, ph, 392.0, env[0:160000])
-    plt.subplot(2, 1, 1)
-    plt.plot(x)
-    plt.subplot(2, 1, 2)
-    plt.plot(sol)
+    env = np.convolve(hwf, abs(signal))
+    env_max = env[np.argmax(env)]
+    env = env/env_max
+
+    sol = synthesis_note(N, amp, ph, 392.0, env[0:160000], fe)
+    a1 = plt.subplot(3, 1, 1)
+    a1.set_title("Base sample")
+    a1.plot(signal)
+    a2 = plt.subplot(3, 1, 2)
+    a2.set_title("new note")
+    a2.plot(sol)
+    a3 = plt.subplot(3, 1, 3)
+    a3.set_title("envloppe")
+    a3.plot(env)
     plt.show()
     sf.write("sol.wav", sol, fe)
     pass
