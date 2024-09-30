@@ -23,8 +23,6 @@ def main(filename="note_guitare_LAd.wav", newFile="La#.wav", audio=None, audioSa
 
     # Apply Hamming window
     frames = hamming(frames)
-    plt.plot(frames)
-    plt.show()
 
     # Get information from frames
     harmonics, phases, fundamental = extract_frequencies(frames, sampleRate, harmonicsCount, displayFreqs=True)
@@ -308,7 +306,8 @@ def create_audio(harmonics, phases, fundamental, sampleRate, enveloppe, duration
             total += harmonics[i] * np.sin(2 * np.pi * fundamental * i * t + phases[i])
 
         audio.append(total)
-
+    plt.plot(audio)
+    plt.show()
     # Apply enveloppe
     new_env   = unpad_thai(enveloppe, len(audio))
     new_audio = pad_thai(audio, len(new_env))

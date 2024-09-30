@@ -1,6 +1,9 @@
 import soundfile as sf
 import numpy as np
 import matplotlib.pyplot as plt
+import wave
+import struct
+from scipy.io.wavfile import write
 
 
 def extract_params(X, freqs):
@@ -32,18 +35,27 @@ def synthesis_note(N, amps, ph, freq, env, fe):
         for i in range(33):
             val += amps[i] * np.sin(2*np.pi*freq*i*dt + ph[i])
         x.append(val)
-    return x * env
+    return np.multiply(x, env)
 
+def create_wav_from_audio(audio, sampleRate, filename):
+    out = wave.open(filename, 'wb')
+    out.setnchannels(1)
+    out.setframerate(sampleRate)
+    out.setsampwidth(2)
+    for frame in audio:
+        data = struct.pack('<h', int(frame))
+        out.writeframes(data)
+    out.close()
 
 if __name__ == "__main__":
     signal, fe = sf.read('note_guitare_lad.wav')
     f = 466
     N = len(signal)
     w = np.hamming(N)
-    signalW = signal * w
-    X = np.fft.fft(signalW, N)
+    X = np.fft.fft(signal, N)
+    Xw = X * w
     freq_arr = np.fft.fftfreq(N)
-    amp, ph = extract_params(X, freq_arr)
+    amp, ph = extract_params(Xw, freq_arr)
 
 
     filter_freq = np.pi / 1000
@@ -59,7 +71,7 @@ if __name__ == "__main__":
     env_max = env[np.argmax(env)]
     env = env/env_max
 
-    sol = synthesis_note(N, amp, ph, 392.0, env[0:160000], fe)
+    sol = synthesis_note(N, amp, ph, 392.0, env[0:N], fe)
     a1 = plt.subplot(3, 1, 1)
     a1.set_title("Base sample")
     a1.plot(signal)
@@ -69,6 +81,6 @@ if __name__ == "__main__":
     a3 = plt.subplot(3, 1, 3)
     a3.set_title("envloppe")
     a3.plot(env)
-    plt.show()
-    sf.write("sol.wav", sol, fe)
-    pass
+    #plt.show()
+    create_wav_from_audio(sol.tolist(), fe, "sol.wav")
+
