@@ -5,8 +5,24 @@ import wave
 import struct
 from scipy.io.wavfile import write
 
+def frequencyMap():
+    freqs = \
+    { "DO":261.6,
+      "DO#":277.2,
+      "RE":293.7,
+      "RE#":311.1,
+      "MI":329.6,
+      "FA":349.2,
+      "FA#":370.0,
+      "SOL":392.0,
+      "SO#":415.3,
+      "LA":440.0,
+      "LA#":466.2,
+      "SI":493.9
+    }
+    return freqs
 
-def extract_params(X, freqs):
+def extract_params(X):
     amp = []
     ph = []
     id_fund = np.argmax(abs(X))
@@ -37,26 +53,25 @@ def synthesis_note(N, amps, ph, freq, env, fe):
         x.append(val)
     return np.multiply(x, env)
 
-def create_wav_from_audio(audio, sampleRate, filename):
+def save_audio(audio, sampleRate, filename):
     out = wave.open(filename, 'wb')
     out.setnchannels(1)
     out.setframerate(sampleRate)
     out.setsampwidth(2)
     for frame in audio:
-        data = struct.pack('<h', int(frame))
+        data = struct.pack('<h', int(frame*8))
         out.writeframes(data)
     out.close()
 
 if __name__ == "__main__":
     signal, fe = sf.read('note_guitare_lad.wav')
-    f = 466
+    frequency_map = frequencyMap()
+    f = frequency_map["LA#"]
     N = len(signal)
     w = np.hamming(N)
     X = np.fft.fft(signal, N)
-    Xw = X * w
-    freq_arr = np.fft.fftfreq(N)
-    amp, ph = extract_params(Xw, freq_arr)
-
+    Xw = np.multiply(X, w)
+    amp, ph = extract_params(Xw)
 
     filter_freq = np.pi / 1000
     target_gain = np.sqrt(2) / 2
@@ -71,7 +86,17 @@ if __name__ == "__main__":
     env_max = env[np.argmax(env)]
     env = env/env_max
 
-    sol = synthesis_note(N, amp, ph, 392.0, env[0:N], fe)
+
+    sol = synthesis_note(N, amp, ph, frequency_map["SOL"], env[0:N], fe)
+    mi = synthesis_note(N, amp, ph, frequency_map["RE#"], env[0:N], fe) #Re# et Mi bemole sont la meme
+    fa = synthesis_note(N, amp, ph, frequency_map["FA"], env[0:N], fe)
+    re = synthesis_note(N, amp, ph, frequency_map["RE"], env[0:N], fe)
+    silence = np.zeros(int(fe/2))
+
+    t_quarter = int(N/4)
+    t_demi = int(N/2)
+    symphony = np.concat((sol[0:t_quarter], sol[0:t_quarter], sol[0:t_quarter], mi[0:t_demi], silence, fa[0:t_quarter], fa[0:t_quarter], fa[0:t_quarter], re))
+
     a1 = plt.subplot(3, 1, 1)
     a1.set_title("Base sample")
     a1.plot(signal)
@@ -81,6 +106,6 @@ if __name__ == "__main__":
     a3 = plt.subplot(3, 1, 3)
     a3.set_title("envloppe")
     a3.plot(env)
-    #plt.show()
-    create_wav_from_audio(sol.tolist(), fe, "sol.wav")
+    plt.show()
+    save_audio(symphony.tolist(), fe, "symphony.wav")
 
