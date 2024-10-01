@@ -30,6 +30,14 @@ def frequencyMap():
     }
     return freqs
 
+def plot_harmonics(harm , X):
+    n = np.zeros(len(X))
+    for i in range(32):
+        n[harm[i][1]] = abs(harm[i][0])
+    plt.figure("Harmonics")
+    plt.plot(n)
+    plt.title("Harmonics")
+
 def extract_params(X):
     """
     Extract parameters from an audio signal
@@ -44,12 +52,13 @@ def extract_params(X):
     peaks=[]
     #Order peaks by magnitude to make sure to keep only real peaks
     for peak in peak_ids:
-        peaks.append(X[peak])
-    peaks = sorted(peaks, reverse=True, key=abs)
+        peaks.append([X[peak], peak])
+    peaks = sorted(peaks, reverse=True, key=lambda x:abs(x[0]))
+    plot_harmonics(peaks, X)
     #Save the first 32 harmonics in arrays
     for i in range(0, 32):
-        amp.append(abs(peaks[i]))
-        ph.append(np.angle(peaks[i]))
+        amp.append(abs(peaks[i][0]))
+        ph.append(np.angle(peaks[i][0]))
     return amp, ph
 
 
@@ -129,6 +138,7 @@ if __name__ == "__main__":
     t_quarter = int(N/4)
     t_demi = int(N/2)
     symphony = np.concat((sol[0:t_quarter], sol[start:t_quarter], sol[start:t_quarter], mi[start:t_demi], silence, fa[start:t_quarter], fa[start:t_quarter], fa[start:t_quarter], re[start:N]))
+    plt.figure("Formes d'onde")
     a1 = plt.subplot(3, 1, 1)
     a1.set_title("Base sample")
     a1.plot(signal)
@@ -136,7 +146,7 @@ if __name__ == "__main__":
     a2.set_title("symphony")
     a2.plot(sol)
     a3 = plt.subplot(3, 1, 3)
-    a3.set_title("envloppe")
+    a3.set_title("envelope")
     a3.plot(env)
     plt.show()
 
