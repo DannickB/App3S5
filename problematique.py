@@ -100,7 +100,7 @@ def synthesis_note(N, amps, ph, freq, env, sr, signal):
             val += amps[i] * np.sin(2*np.pi*freq*i*dt - ph[i])
         x.append(val)
     x = np.multiply(x, env)
-    x *= max(np.abs(signal) / max(np.abs(x)))
+    x *= max(np.abs(signal)) / max(np.abs(x))
     return x
 
 if __name__ == "__main__":
@@ -112,6 +112,9 @@ if __name__ == "__main__":
     N = len(signal)
     X = np.fft.fft(signal, sr)
     amp, ph = extract_params(X[0:int(sr/2)])
+    plt.figure("Fft du signal d'entrée")
+    plt.title("Fft du signal d'entrée")
+    plt.plot(np.fft.fftshift(np.abs(X)))
 
     #Envelope segment
     filter_freq = np.pi / 1000 # Frequency of known gain
@@ -123,6 +126,9 @@ if __name__ == "__main__":
     hf[int(Nf / 2)] = k / Nf
     w = np.hanning(Nf)
     hwf = hf * w
+    plt.figure("Filtre passe bas")
+    plt.title("Filtre passe bas")
+    plt.plot(hwf)
     env = np.convolve(hwf, abs(signal))
     env_max = env[np.argmax(env)]
     env = env/env_max
