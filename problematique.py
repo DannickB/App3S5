@@ -39,11 +39,14 @@ def extract_params(X):
     amp = []
     ph = []
     fund = np.argmax(abs(X))
+    # Finds every local peaks by region of half the fundamental frequency
     peak_ids, _ = ss.find_peaks(np.abs(X[0:int(len(X)/2)]), distance=fund/2)
     peaks=[]
+    #Order peaks by magnitude to make sure to keep only real peaks
     for peak in peak_ids:
         peaks.append(X[peak])
     peaks = sorted(peaks, reverse=True, key=abs)
+    #Save the first 32 harmonics in arrays
     for i in range(0, 32):
         amp.append(abs(peaks[i]))
         ph.append(np.angle(peaks[i]))
@@ -106,7 +109,7 @@ if __name__ == "__main__":
     target_gain = np.sqrt(2) / 2 # Wanted gain at said frequency
     Nf = find_order(filter_freq, target_gain) #Order of low pass filter
     nf = np.arange(-Nf / 2, Nf / 2)
-    k = int((Nf * f / sr - 1) / 2) # finding k from N since we know sample rate and frequency wanted
+    k = int((2 * Nf * filter_freq / sr ) + 1) # finding k from N since we know sample rate and frequency wanted
     hf = (1 / Nf) * np.sin(np.pi * nf * k / Nf) / (np.sin(np.pi * nf / Nf) + 1e-20)
     hf[int(Nf / 2)] = k / Nf
     w = np.hanning(Nf)
@@ -131,7 +134,7 @@ if __name__ == "__main__":
     a1.plot(signal)
     a2 = plt.subplot(3, 1, 2)
     a2.set_title("symphony")
-    a2.plot(symphony)
+    a2.plot(sol)
     a3 = plt.subplot(3, 1, 3)
     a3.set_title("envloppe")
     a3.plot(env)
