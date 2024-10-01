@@ -55,4 +55,4 @@ plt.plot(np.abs(y2))
 plt.tight_layout()
 plt.show()
 
-sf.write("guitare.wav",y1,fe)
+sf.write("basson.wav",y1,fe)
