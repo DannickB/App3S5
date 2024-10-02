@@ -56,7 +56,6 @@ env = env / env_max
 
 Y = np.fft.fft(y1, fe)
 amp, ph = extract_params(X[0:int(fe/2)])
-plt.show()
 fad = synthesis_note(len, amp, ph, 466.2, env[0:len], fe, y1)
 
 
