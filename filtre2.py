@@ -15,6 +15,7 @@ plt.close('all')
 
 x, fe = sf.read('note_basson_plus_sinus_1000_hz.wav')
 
+len = len(x)
 N = 6000
 fc = 1000
 fw = 40
@@ -51,13 +52,12 @@ hwf = hf * w
 env = np.convolve(hwf, abs(y1))
 env_max = env[np.argmax(env)]
 env = env / env_max
-plt.figure("figure")
-plt.plot(env)
-plt.show()
+
 
 Y = np.fft.fft(y1, fe)
 amp, ph = extract_params(X[0:int(fe/2)])
-fad = synthesis_note(N, amp, ph, 466.2, env[0:N], fe, y1)
+plt.show()
+fad = synthesis_note(len, amp, ph, 466.2, env[0:len], fe, y1)
 
 
 y2 = 0
