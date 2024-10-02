@@ -47,9 +47,7 @@ nf = np.arange(-Nf / 2, Nf / 2)
 k = int((2 * Nf * filter_freq / fe) + 1) # finding k from N since we know sample rate and frequency wanted
 hf = (1 / Nf) * np.sin(np.pi * nf * k / Nf) / (np.sin(np.pi * nf / Nf) + 1e-20)
 hf[int(Nf / 2)] = k / Nf
-w = np.hanning(Nf)
-hwf = hf * w
-env = np.convolve(hwf, abs(y1))
+env = np.convolve(hf, abs(y1))
 env_max = env[np.argmax(env)]
 env = env / env_max
 

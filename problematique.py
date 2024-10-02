@@ -124,12 +124,10 @@ if __name__ == "__main__":
     k = int((2 * Nf * filter_freq / sr ) + 1) # finding k from N since we know sample rate and frequency wanted
     hf = (1 / Nf) * np.sin(np.pi * nf * k / Nf) / (np.sin(np.pi * nf / Nf) + 1e-20)
     hf[int(Nf / 2)] = k / Nf
-    w = np.hanning(Nf)
-    hwf = hf * w
     plt.figure("Filtre passe bas")
     plt.title("Filtre passe bas")
-    plt.plot(hwf)
-    env = np.convolve(hwf, abs(signal))
+    plt.plot(hf)
+    env = np.convolve(hf, abs(signal))
     env_max = env[np.argmax(env)]
     env = env/env_max
 
