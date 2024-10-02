@@ -48,7 +48,7 @@ def extract_params(X):
     ph = []
     fund = np.argmax(abs(X))
     # Finds every local peaks by region of half the fundamental frequency
-    peak_ids, _ = ss.find_peaks(np.abs(X[0:int(len(X)/2)]), distance=fund/2)
+    peak_ids, _ = ss.find_peaks(np.abs(X[0:int(len(X)/2)]), distance=200)
     peaks=[]
     #Order peaks by magnitude to make sure to keep only real peaks
     for peak in peak_ids:

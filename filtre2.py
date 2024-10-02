@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
 import scipy as sc
+from problematique import *
 from numpy.lib.format import write_array_header_1_0
 
 plt.close('all')
@@ -37,7 +38,30 @@ X = sc.fft.fft(x)
 #H = np.pad(H, (0,np.shape(X)[0] - np.shape(H)[0]), 'constant', constant_values=(0,0))
 #Y = np.multiply(X,H)
 #y2 = sc.fft.ifft(Y)
+
+filter_freq = np.pi / 1000 # Frequency of known gain
+target_gain = np.sqrt(2) / 2 # Wanted gain at said frequency
+Nf = find_order(filter_freq, target_gain) #Order of low pass filter
+nf = np.arange(-Nf / 2, Nf / 2)
+k = int((2 * Nf * filter_freq / fe) + 1) # finding k from N since we know sample rate and frequency wanted
+hf = (1 / Nf) * np.sin(np.pi * nf * k / Nf) / (np.sin(np.pi * nf / Nf) + 1e-20)
+hf[int(Nf / 2)] = k / Nf
+w = np.hanning(Nf)
+hwf = hf * w
+env = np.convolve(hwf, abs(y1))
+env_max = env[np.argmax(env)]
+env = env / env_max
+plt.figure("figure")
+plt.plot(env)
+plt.show()
+
+Y = np.fft.fft(y1, fe)
+amp, ph = extract_params(X[0:int(fe/2)])
+fad = synthesis_note(N, amp, ph, 466.2, env[0:N], fe, y1)
+
+
 y2 = 0
+plt.figure("specs")
 plt.subplot(3,2,1)
 plt.plot(n, h)
 plt.subplot(3,2,2)
@@ -53,6 +77,9 @@ plt.plot(np.abs(y1))
 plt.subplot(3,2,6)
 plt.plot(np.abs(y2))
 plt.tight_layout()
+plt.figure("Synthesised")
+plt.plot(fad)
 plt.show()
 
 sf.write("basson.wav",y1,fe)
+sf.write("basson_synth.wav",fad,fe)
